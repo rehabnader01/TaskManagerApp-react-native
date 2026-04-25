@@ -29,7 +29,7 @@
 //     const trimmedPassword = password.trim();
 
 //     if (!trimmedName || !trimmedEmail || !trimmedPassword) {
-//       setMessage("Please fill in name, email, and password.");
+//       setMessage("Please fill in all fields.");
 //       return;
 //     }
 
@@ -46,36 +46,47 @@
 //     try {
 //       setLoading(true);
 
-//       const res = await API.post("/auth/register", {
+//       const payload = {
 //         name: trimmedName,
 //         email: trimmedEmail,
 //         password: trimmedPassword,
-//       });
+//       };
+
+//       console.log("REGISTER PAYLOAD:", payload);
+
+//       const res = await API.post("/auth/register", payload);
 
 //       console.log("REGISTER SUCCESS:", res.data);
 
-//       setMessage("Account created successfully. Redirecting to login...");
+//       setMessage("Account created successfully.");
 
 //       setTimeout(() => {
 //         navigation.navigate("Login");
 //       }, 1200);
 //     } catch (error) {
-//       console.log("REGISTER ERROR DATA:", error.response?.data);
-//       console.log("REGISTER ERROR STATUS:", error.response?.status);
+//       console.log("=== REGISTER ERROR START ===");
+//       console.log("error.message:", error.message);
+//       console.log("error.response?.status:", error.response?.status);
+//       console.log("error.response?.data:", error.response?.data);
+//       console.log("error.request:", error.request);
+//       console.log("=== REGISTER ERROR END ===");
 
-//       const backendError =
-//         error.response?.data?.detail ||
-//         error.response?.data?.message ||
-//         error.response?.data?.error;
+//       const data = error.response?.data;
 
-//       if (typeof backendError === "string" && backendError.trim()) {
-//         setMessage(backendError);
-//       } else if (Array.isArray(backendError)) {
-//         setMessage(backendError.join(", "));
-//       } else if (error.response?.status === 409) {
-//         setMessage("This email is already registered. Please log in instead.");
-//       } else if (error.response?.status === 400) {
-//         setMessage("Please check your entered data and try again.");
+//       if (typeof data === "string" && data.trim()) {
+//         setMessage(data);
+//       } else if (data?.detail) {
+//         setMessage(
+//           typeof data.detail === "string"
+//             ? data.detail
+//             : JSON.stringify(data.detail)
+//         );
+//       } else if (data?.message) {
+//         setMessage(data.message);
+//       } else if (data?.error) {
+//         setMessage(data.error);
+//       } else if (!error.response) {
+//         setMessage("Cannot connect to server.");
 //       } else {
 //         setMessage("Registration failed. Please try again.");
 //       }
@@ -100,7 +111,8 @@
 
 //         <View style={globalStyles.card}>
 //           <Text style={styles.hint}>
-//             Use a valid email address and a password with at least 6 characters.
+//             Please enter your name, a valid email, and a password with at least
+//             6 characters.
 //           </Text>
 
 //           <TextInput
@@ -209,6 +221,8 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  SafeAreaView,
+  ScrollView,
 } from "react-native";
 import API from "../../../services/api";
 import globalStyles from "../../constants/globalStyles";
@@ -256,25 +270,15 @@ export default function RegisterScreen({ navigation }) {
         password: trimmedPassword,
       };
 
-      console.log("REGISTER PAYLOAD:", payload);
-
       const res = await API.post("/auth/register", payload);
 
       console.log("REGISTER SUCCESS:", res.data);
-
       setMessage("Account created successfully.");
 
       setTimeout(() => {
         navigation.navigate("Login");
       }, 1200);
     } catch (error) {
-      console.log("=== REGISTER ERROR START ===");
-      console.log("error.message:", error.message);
-      console.log("error.response?.status:", error.response?.status);
-      console.log("error.response?.data:", error.response?.data);
-      console.log("error.request:", error.request);
-      console.log("=== REGISTER ERROR END ===");
-
       const data = error.response?.data;
 
       if (typeof data === "string" && data.trim()) {
@@ -300,120 +304,232 @@ export default function RegisterScreen({ navigation }) {
   };
 
   return (
-    <View style={globalStyles.screen}>
-      <View style={styles.bgShapeTop} />
-      <View style={styles.bgShapeBottom} />
+    <SafeAreaView style={styles.container}>
+      <View style={styles.bgTopLeft} />
+      <View style={styles.bgTopRight} />
+      <View style={styles.bgBottomRight} />
 
-      <View style={globalStyles.authWrapper}>
-        <View style={styles.header}>
-          <Text style={styles.smallLabel}>Create your account</Text>
-          <Text style={globalStyles.title}>Register</Text>
-          <Text style={globalStyles.subtitle}>
-            Enter your details below to create a new account.
-          </Text>
-        </View>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={globalStyles.authWrapper}>
+          <View style={globalStyles.authCard}>
+            <View style={styles.topGlow} />
 
-        <View style={globalStyles.card}>
-          <Text style={styles.hint}>
-            Please enter your name, a valid email, and a password with at least
-            6 characters.
-          </Text>
+            <Text style={styles.pageLabel}>Sign Up</Text>
 
-          <TextInput
-            placeholder="Full name"
-            placeholderTextColor={COLORS.textSecondary}
-            style={globalStyles.input}
-            onChangeText={setName}
-            value={name}
-          />
-
-          <TextInput
-            placeholder="Email"
-            placeholderTextColor={COLORS.textSecondary}
-            style={globalStyles.input}
-            onChangeText={setEmail}
-            value={email}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-
-          <TextInput
-            placeholder="Password"
-            placeholderTextColor={COLORS.textSecondary}
-            secureTextEntry
-            style={globalStyles.input}
-            onChangeText={setPassword}
-            value={password}
-          />
-
-          <TouchableOpacity
-            style={[globalStyles.button, loading && globalStyles.buttonDisabled]}
-            onPress={handleRegister}
-            disabled={loading}
-          >
-            <Text style={globalStyles.buttonText}>
-              {loading ? "Creating account..." : "Sign Up"}
+            <Text style={styles.mainTitle}>Welcome</Text>
+            <Text style={styles.mainSubtitle}>
+              It’s time to be productive
             </Text>
-          </TouchableOpacity>
 
-          {message ? (
-            <Text
-              style={[
-                globalStyles.message,
-                message.toLowerCase().includes("success")
-                  ? globalStyles.successText
-                  : globalStyles.errorText,
-              ]}
+            <View style={styles.formHeaderRow}>
+              <View style={styles.iconCircle}>
+                <Text style={styles.iconText}>⇥</Text>
+              </View>
+
+              <View>
+                <Text style={styles.formTitle}>Sign Up</Text>
+                <Text style={styles.formHint}>
+                  Enter Your Credentials to continue
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.divider} />
+
+            <Text style={styles.inputLabel}>Full Name</Text>
+            <TextInput
+              placeholder="Your Name"
+              placeholderTextColor="#A497CE"
+              style={globalStyles.input}
+              onChangeText={setName}
+              value={name}
+            />
+
+            <Text style={styles.inputLabel}>Email</Text>
+            <TextInput
+              placeholder="Email Address"
+              placeholderTextColor="#A497CE"
+              style={globalStyles.input}
+              onChangeText={setEmail}
+              value={email}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+
+            <Text style={styles.inputLabel}>Password</Text>
+            <TextInput
+              placeholder="Password"
+              placeholderTextColor="#A497CE"
+              secureTextEntry
+              style={globalStyles.input}
+              onChangeText={setPassword}
+              value={password}
+            />
+
+            <TouchableOpacity
+              style={[globalStyles.button, loading && globalStyles.buttonDisabled]}
+              onPress={handleRegister}
+              disabled={loading}
+              activeOpacity={0.85}
             >
-              {message}
-            </Text>
-          ) : null}
+              <Text style={globalStyles.buttonText}>
+                {loading ? "Creating account..." : "Let’s Start"}
+              </Text>
+            </TouchableOpacity>
 
-          <Text
-            style={globalStyles.linkText}
-            onPress={() => navigation.navigate("Login")}
-          >
-            Already have an account? Login
-          </Text>
+            {message ? (
+              <Text
+                style={[
+                  globalStyles.message,
+                  message.toLowerCase().includes("success")
+                    ? globalStyles.successText
+                    : globalStyles.errorText,
+                ]}
+              >
+                {message}
+              </Text>
+            ) : null}
+
+            <Text
+              style={globalStyles.linkText}
+              onPress={() => navigation.navigate("Login")}
+            >
+              Already have an account? Login
+            </Text>
+          </View>
         </View>
-      </View>
-    </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  bgShapeTop: {
-    position: "absolute",
-    width: 220,
-    height: 220,
-    borderRadius: 110,
-    backgroundColor: COLORS.softPurple,
-    top: -80,
-    left: -70,
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.background,
   },
-  bgShapeBottom: {
+
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 24,
+  },
+
+  bgTopLeft: {
     position: "absolute",
-    width: 180,
-    height: 180,
-    borderRadius: 90,
+    width: 210,
+    height: 210,
+    borderRadius: 105,
     backgroundColor: COLORS.softPink,
-    bottom: -50,
-    right: -50,
+    top: -50,
+    left: -80,
   },
-  header: {
-    marginBottom: 18,
-    paddingHorizontal: 4,
+
+  bgTopRight: {
+    position: "absolute",
+    width: 190,
+    height: 190,
+    borderRadius: 95,
+    backgroundColor: COLORS.softMint,
+    top: 50,
+    right: -70,
   },
-  smallLabel: {
-    fontSize: 13,
-    color: COLORS.primaryDark,
+
+  bgBottomRight: {
+    position: "absolute",
+    width: 230,
+    height: 230,
+    borderRadius: 115,
+    backgroundColor: COLORS.softBlue,
+    bottom: -95,
+    right: -90,
+  },
+
+  topGlow: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 140,
+    backgroundColor: "#F7F7F3",
+    opacity: 0.7,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+  },
+
+  pageLabel: {
+    fontSize: 14,
+    color: "#A7A1BE",
     fontWeight: "600",
     marginBottom: 8,
   },
-  hint: {
-    fontSize: 13,
+
+  mainTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: COLORS.textPrimary,
+    textAlign: "center",
+    marginTop: 8,
+  },
+
+  mainSubtitle: {
+    fontSize: 15,
     color: COLORS.textSecondary,
-    marginBottom: 14,
-    lineHeight: 20,
+    textAlign: "center",
+    marginTop: 4,
+    marginBottom: 26,
+  },
+
+  formHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 18,
+  },
+
+  iconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#B8A9FF",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+
+  iconText: {
+    color: COLORS.white,
+    fontSize: 18,
+    fontWeight: "800",
+  },
+
+  formTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: COLORS.textPrimary,
+  },
+
+  formHint: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    marginTop: 2,
+  },
+
+  divider: {
+    height: 1,
+    backgroundColor: "#2D2547",
+    opacity: 0.2,
+    marginBottom: 18,
+  },
+
+  inputLabel: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: COLORS.textPrimary,
+    marginBottom: 8,
   },
 });
